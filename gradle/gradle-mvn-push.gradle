@@ -155,11 +155,18 @@ afterEvaluate { project ->
         configurePom(publication.pom)
     }
 
-    if (getReleaseSigningEnabled()) {
+    // Maven Central rejects unsigned artifacts, but a local build must still
+    // work without a key. The key is supplied through environment variables in
+    // CI so it never lives in the repository.
+    def signingKey = System.getenv('SIGNING_KEY')
+    if (getReleaseSigningEnabled() && signingKey != null && !signingKey.isEmpty()) {
         signing {
+            useInMemoryPgpKeys(signingKey, System.getenv('SIGNING_PASSPHRASE'))
             publishing.publications.all { publication ->
                 sign publication
             }
         }
+    } else {
+        logger.lifecycle('SIGNING_KEY is not set - artifacts will not be signed')
     }
 }
