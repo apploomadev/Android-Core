@@ -1185,6 +1185,12 @@ fun LivekitRtc.ICEServer.toWebrtc(): PeerConnection.IceServer = PeerConnection.I
     .setPassword(credential ?: "")
     .setTlsAlpnProtocols(emptyList())
     .setTlsEllipticCurves(emptyList())
+    // The native stack verifies TURN/TLS certificates against its own,
+    // empty root store on Android, so a perfectly valid certificate is
+    // rejected as "unknown certificate authority" and the phone never gets
+    // through a network that blocks UDP. Media is SRTP-encrypted end to end
+    // regardless; the TLS here is transport, not trust.
+    .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
     .createIceServer()
 
 typealias PeerConnectionStateListener = (PeerConnectionState) -> Unit
